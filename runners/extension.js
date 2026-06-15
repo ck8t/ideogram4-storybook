@@ -98,9 +98,16 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   const outPath   = values.output_path ? String(values.output_path) : null
   const mcpServer         = values.mcp_server ? String(values.mcp_server) : null
   const magicPromptServer = values.magic_prompt_mcp_server ? String(values.magic_prompt_mcp_server) : null
-  const genImages         = values.generate_scene_images !== false && !!mcpServer
   const artStyle          = String(values.art_style || "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces, neighbourhood rooftops")
   const imgModel          = String(values.image_model || 'gpt-4.1')
+
+  // ── External images from the "images" port (skips built-in MCP generation) ─
+  // Preferred decoupled design: caller generates images externally and passes them here.
+  const externalImages = (inputsByHandle && Array.isArray(inputsByHandle['images']) && inputsByHandle['images'].length > 0)
+    ? inputsByHandle['images']
+    : null
+  // Built-in MCP generation only runs when no external images are supplied.
+  const genImages = !externalImages && values.generate_scene_images === true && !!mcpServer
 
   const SIZES = { A4: [595.28, 841.89], Letter: [612, 792], A5: [419.53, 595.28], Square: [600, 600] }
   const [W, H] = SIZES[pageSz] || SIZES.A4
@@ -135,9 +142,22 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   if (layout === 'title_scenes') {
     const tp = pdfDoc.addPage([W, H])
 
-    // Optional cover image from in_cover port (backward-compatible)
+    // Optional cover image from the "cover" port.
+    // Accepts: raw base64 string, MCP content array (markdown image), or {cover_base64}.
     const coverPort = inputsByHandle && inputsByHandle['cover']
-    const coverB64  = coverPort && typeof coverPort.cover_base64 === 'string' ? coverPort.cover_base64 : null
+    let coverB64 = null
+    if (coverPort) {
+      if (typeof coverPort === 'string') {
+        const m = coverPort.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+        coverB64 = m ? m[1].replace(/\n/g, '') : (coverPort.length > 100 ? coverPort : null)
+      } else if (Array.isArray(coverPort)) {
+        const flat = coverPort.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
+        const m = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+        if (m) coverB64 = m[1].replace(/\n/g, '')
+      } else if (coverPort && typeof coverPort === 'object') {
+        coverB64 = typeof coverPort.cover_base64 === 'string' ? coverPort.cover_base64 : null
+      }
+    }
     let textBaseY = H / 2 + 60
 
     if (coverB64) {
@@ -173,10 +193,25 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     const page    = pdfDoc.addPage([W, H])
     const maxW    = W - MARGIN * 2
 
-    // ── Generate scene image ───────────────────────────────────────────────
+    // ── Resolve scene image ────────────────────────────────────────────────
     let sceneB64 = null
 
-    if (genImages && mcpServer && typeof callAgent === 'function' && typeof callTool === 'function') {
+    if (externalImages) {
+      // Use pre-generated image from the "images" port (decoupled design).
+      const raw = externalImages[i]
+      if (raw != null) {
+        if (typeof raw === 'string') {
+          const m = raw.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+          sceneB64 = m ? m[1].replace(/\n/g, '') : (raw.length > 100 ? raw : null)
+        } else if (Array.isArray(raw)) {
+          const flat = raw.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
+          const m = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+          if (m) sceneB64 = m[1].replace(/\n/g, '')
+        } else if (raw && typeof raw === 'object' && typeof raw.base64 === 'string') {
+          sceneB64 = raw.base64
+        }
+      }
+    } else if (genImages && mcpServer && typeof callAgent === 'function' && typeof callTool === 'function') {
       try {
         // 1. Art director agent → structured image prompt
         const artRes = await callAgent({

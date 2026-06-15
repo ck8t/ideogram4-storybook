@@ -1,7 +1,7 @@
 export default {
   type: 'storybook_pdf',
   name: 'Storybook PDF',
-  description: 'Render scenes into a styled PDF - generates one AI image per scene (kids-book layout)',
+  description: 'Render scenes into a styled PDF. Connect the "images" port to supply pre-generated images, or enable built-in MCP generation (advanced).',
   category: 'custom',
   group: 'Storybook',
   bgColor: '#dc2626',
@@ -42,45 +42,51 @@ export default {
       mode: 'advanced',
     },
 
-    /* -- Per-scene image generation -- */
+    /* ── Built-in MCP image generation (advanced / disabled by default) ──────────
+       Preferred design: connect pre-generated images via the "images" input port.
+       These sub-blocks only apply when the "images" port is NOT connected. */
     {
       id: 'generate_scene_images',
-      title: 'Generate scene images',
+      title: 'Built-in scene image generation (MCP)',
       type: 'switch',
-      value: () => true,
-      description: 'Generate one AI image per scene and embed it above the text (kids-book layout).',
+      value: () => false,
+      mode: 'advanced',
+      description: 'Generate one image per scene using an internal MCP call. Ignored when images are supplied via the "images" input port.',
     },
     {
       id: 'magic_prompt_mcp_server',
       title: 'magic_prompt MCP server',
       type: 'mcp-server-selector',
+      mode: 'advanced',
       placeholder: 'Select MCP server for magic_prompt',
-      description: 'MCP server that provides the magic_prompt tool for prompt enhancement. Leave blank to skip magic_prompt and send the art director prompt directly to generate_image.',
+      description: 'MCP server with the magic_prompt tool. Leave blank to skip enhancement.',
       condition: { field: 'generate_scene_images', value: true },
     },
     {
       id: 'mcp_server',
       title: 'Image generation MCP server',
       type: 'mcp-server-selector',
-      required: true,
+      mode: 'advanced',
       placeholder: 'Select MCP server for generate_image',
-      description: 'MCP server that provides the generate_image tool (e.g. ideogram4). Required when Generate scene images is on.',
+      description: 'MCP server with the generate_image tool (e.g. ideogram4). Required when built-in generation is on.',
       condition: { field: 'generate_scene_images', value: true },
     },
     {
       id: 'image_model',
       title: 'Art director model',
-      type: 'short-input',
-      placeholder: 'gpt-4.1',
-      description: 'LLM used to write the image prompt for each scene.',
+      type: 'llm-model-selector',
+      mode: 'advanced',
+      placeholder: 'Select model for art direction prompts',
+      description: 'LLM used to write the image prompt for each scene (built-in generation only).',
       condition: { field: 'generate_scene_images', value: true },
     },
     {
       id: 'art_style',
       title: 'Art style',
       type: 'long-input',
+      mode: 'advanced',
       placeholder: "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces",
-      description: 'Style description passed to the art director agent for every scene image.',
+      description: 'Style description passed to the art director agent for every scene image (built-in generation only).',
       condition: { field: 'generate_scene_images', value: true },
     },
   ],
@@ -105,7 +111,9 @@ export default {
   },
 
   inputs: {
-    input: { type: 'any', description: 'scenes[] array or object with .scenes from Story Splitter' },
+    input:  { type: 'any',   description: 'scenes[] array or object with .scenes from Story Splitter' },
+    images: { type: 'array', description: 'Pre-generated images (base64 or MCP content, one per scene). When connected, built-in MCP generation is skipped.' },
+    cover:  { type: 'any',   description: 'Cover image — base64 string, MCP content array, or {cover_base64}. Shown on the title page.' },
   },
   outputs: {
     path:       { type: 'string', description: 'Absolute path of written PDF (when output_path is set)' },

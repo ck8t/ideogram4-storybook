@@ -1,7 +1,7 @@
 {
   "id": "ideogram4-storybook",
   "name": "Ideogram 4 Storybook",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "salilvnair",
   "description": "Story Splitter + Storybook PDF — split a story into scenes and export a styled PDF storybook",
   "blocks": [
