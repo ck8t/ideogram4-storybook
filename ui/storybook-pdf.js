@@ -3,7 +3,9 @@ export default {
   name: 'Storybook PDF',
   description: 'Render scenes into a styled PDF — generates one AI image per scene (kids-book layout)',
   category: 'custom',
+  group: 'Storybook',
   bgColor: '#dc2626',
+  iconSvg: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z|M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
   subBlocks: [
     { id: 'title',  title: 'Document title', type: 'short-input', placeholder: 'My Storybook' },
     { id: 'author', title: 'Author',          type: 'short-input', placeholder: 'Optional author name' },

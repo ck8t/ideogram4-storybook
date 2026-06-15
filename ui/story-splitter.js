@@ -3,7 +3,9 @@ export default {
   name: 'Story Splitter',
   description: 'Split a story into scenes or chapters',
   category: 'custom',
+  group: 'Storybook',
   bgColor: '#7c3aed',
+  iconSvg: 'M12 3L12 11|M12 11L7 20|M12 11L17 20',
   subBlocks: [
     {
       id: 'split_by',
