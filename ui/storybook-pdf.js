@@ -51,12 +51,20 @@ export default {
       description: 'Generate one AI image per scene and embed it above the text (kids-book layout).',
     },
     {
+      id: 'magic_prompt_mcp_server',
+      title: 'magic_prompt MCP server',
+      type: 'mcp-server-selector',
+      placeholder: 'Select MCP server for magic_prompt',
+      description: 'MCP server that provides the magic_prompt tool for prompt enhancement. Leave blank to skip magic_prompt and send the art director prompt directly to generate_image.',
+      condition: { field: 'generate_scene_images', value: true },
+    },
+    {
       id: 'mcp_server',
-      title: 'Image MCP server',
+      title: 'Image generation MCP server',
       type: 'mcp-server-selector',
       required: true,
-      placeholder: 'Select MCP server for image generation',
-      description: 'MCP server that provides magic_prompt and generate_image tools (e.g. ideogram4). Required when Generate scene images is on.',
+      placeholder: 'Select MCP server for generate_image',
+      description: 'MCP server that provides the generate_image tool (e.g. ideogram4). Required when Generate scene images is on.',
       condition: { field: 'generate_scene_images', value: true },
     },
     {

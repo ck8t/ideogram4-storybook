@@ -96,10 +96,11 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   const fsBody    = Math.max(6, parseFloat(String(values.font_size_body   || '11')))
   const pageNums  = values.include_page_numbers !== false
   const outPath   = values.output_path ? String(values.output_path) : null
-  const mcpServer = values.mcp_server ? String(values.mcp_server) : null
-  const genImages = values.generate_scene_images !== false && !!mcpServer
-  const artStyle  = String(values.art_style || "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces, neighbourhood rooftops")
-  const imgModel  = String(values.image_model || 'gpt-4.1')
+  const mcpServer         = values.mcp_server ? String(values.mcp_server) : null
+  const magicPromptServer = values.magic_prompt_mcp_server ? String(values.magic_prompt_mcp_server) : null
+  const genImages         = values.generate_scene_images !== false && !!mcpServer
+  const artStyle          = String(values.art_style || "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces, neighbourhood rooftops")
+  const imgModel          = String(values.image_model || 'gpt-4.1')
 
   const SIZES = { A4: [595.28, 841.89], Letter: [612, 792], A5: [419.53, 595.28], Square: [600, 600] }
   const [W, H] = SIZES[pageSz] || SIZES.A4
@@ -196,12 +197,15 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
         try { promptStr = JSON.parse(rawOut).prompt || rawOut } catch { promptStr = rawOut }
 
         if (promptStr) {
-          // 2. Magic prompt enhancement
-          const magicRaw  = await callTool(mcpServer, 'magic_prompt', { prompt: promptStr })
-          const magicText = _flattenMcpContent(magicRaw)
+          // 2. magic_prompt enhancement — uses dedicated server if configured, skipped if blank
+          let finalPrompt = promptStr
+          if (magicPromptServer) {
+            const magicRaw = await callTool(magicPromptServer, 'magic_prompt', { prompt: promptStr })
+            finalPrompt    = _flattenMcpContent(magicRaw) || promptStr
+          }
 
           // 3. Generate image
-          const imgRaw  = await callTool(mcpServer, 'generate_image', { caption_json: magicText || promptStr })
+          const imgRaw  = await callTool(mcpServer, 'generate_image', { caption_json: finalPrompt })
           const imgText = _flattenMcpContent(imgRaw)
 
           // 4. Extract base64 PNG
