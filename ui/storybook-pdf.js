@@ -84,6 +84,26 @@ export default {
       condition: { field: 'generate_scene_images', value: true },
     },
   ],
+  // Browser run: proxy the heavy lifting (pdf-lib, MCP calls) to the
+  // extension bridge server which runs the Node.js extension runner.
+  async run({ values, input, inputsByHandle }) {
+    const base = (
+      (typeof globalThis !== 'undefined' && globalThis.__CK8T_BRIDGE_BASE__) ||
+      'http://127.0.0.1:3001/api/v1'
+    ).replace(/\/$/, '')
+    const res = await fetch(`${base}/ck8t/run-block`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'storybook_pdf', values, input, inputsByHandle }),
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new Error(`Storybook PDF bridge error ${res.status}: ${text}`)
+    }
+    const { output } = await res.json()
+    return output
+  },
+
   inputs: {
     input: { type: 'any', description: 'scenes[] array or object with .scenes from Story Splitter' },
   },
