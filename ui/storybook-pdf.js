@@ -1,7 +1,7 @@
 export default {
   type: 'storybook_pdf',
   name: 'Storybook PDF',
-  description: 'Render scenes into a styled PDF — generates one AI image per scene (kids-book layout)',
+  description: 'Render scenes into a styled PDF - generates one AI image per scene (kids-book layout)',
   category: 'custom',
   group: 'Storybook',
   bgColor: '#dc2626',
@@ -41,7 +41,7 @@ export default {
       placeholder: '~/Desktop/storybook.pdf  (blank = return base64)',
     },
 
-    /* ── Per-scene image generation ── */
+    /* -- Per-scene image generation -- */
     {
       id: 'generate_scene_images',
       title: 'Generate scene images',
