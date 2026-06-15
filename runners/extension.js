@@ -96,8 +96,8 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   const fsBody    = Math.max(6, parseFloat(String(values.font_size_body   || '11')))
   const pageNums  = values.include_page_numbers !== false
   const outPath   = values.output_path ? String(values.output_path) : null
-  const mcpServer = String(values.mcp_server || 'ideogram4')
-  const genImages = values.generate_scene_images !== false
+  const mcpServer = values.mcp_server ? String(values.mcp_server) : null
+  const genImages = values.generate_scene_images !== false && !!mcpServer
   const artStyle  = String(values.art_style || "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces, neighbourhood rooftops")
   const imgModel  = String(values.image_model || 'gpt-4.1')
 
@@ -175,7 +175,7 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     // ── Generate scene image ───────────────────────────────────────────────
     let sceneB64 = null
 
-    if (genImages && typeof callAgent === 'function' && typeof callTool === 'function') {
+    if (genImages && mcpServer && typeof callAgent === 'function' && typeof callTool === 'function') {
       try {
         // 1. Art director agent → structured image prompt
         const artRes = await callAgent({

@@ -52,9 +52,10 @@ export default {
     {
       id: 'mcp_server',
       title: 'Image MCP server',
-      type: 'short-input',
-      placeholder: 'ideogram4',
-      description: 'MCP server ID that provides magic_prompt and generate_image tools.',
+      type: 'mcp-server-selector',
+      required: true,
+      placeholder: 'Select MCP server for image generation',
+      description: 'MCP server that provides magic_prompt and generate_image tools (e.g. ideogram4). Required when Generate scene images is on.',
     },
     {
       id: 'image_model',
