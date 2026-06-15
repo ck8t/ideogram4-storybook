@@ -31,14 +31,15 @@ export default {
       ],
       value: () => 'title_scenes',
     },
-    { id: 'font_size_heading',    title: 'Heading font size', type: 'short-input', placeholder: '18' },
-    { id: 'font_size_body',       title: 'Body font size',    type: 'short-input', placeholder: '11' },
-    { id: 'include_page_numbers', title: 'Page numbers',      type: 'switch',      value: () => true },
+    { id: 'font_size_heading',    title: 'Heading font size', type: 'short-input', placeholder: '18', mode: 'advanced' },
+    { id: 'font_size_body',       title: 'Body font size',    type: 'short-input', placeholder: '11', mode: 'advanced' },
+    { id: 'include_page_numbers', title: 'Page numbers',      type: 'switch',      value: () => true, mode: 'advanced' },
     {
       id: 'output_path',
       title: 'Save to path',
       type: 'short-input',
       placeholder: '~/Desktop/storybook.pdf  (blank = return base64)',
+      mode: 'advanced',
     },
 
     /* -- Per-scene image generation -- */
@@ -56,6 +57,7 @@ export default {
       required: true,
       placeholder: 'Select MCP server for image generation',
       description: 'MCP server that provides magic_prompt and generate_image tools (e.g. ideogram4). Required when Generate scene images is on.',
+      condition: { field: 'generate_scene_images', value: true },
     },
     {
       id: 'image_model',
@@ -63,6 +65,7 @@ export default {
       type: 'short-input',
       placeholder: 'gpt-4.1',
       description: 'LLM used to write the image prompt for each scene.',
+      condition: { field: 'generate_scene_images', value: true },
     },
     {
       id: 'art_style',
@@ -70,6 +73,7 @@ export default {
       type: 'long-input',
       placeholder: "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces",
       description: 'Style description passed to the art director agent for every scene image.',
+      condition: { field: 'generate_scene_images', value: true },
     },
   ],
   inputs: {

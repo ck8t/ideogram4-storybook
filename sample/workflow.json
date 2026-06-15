@@ -99,9 +99,10 @@
       "n_speech_agent": {
         "model": "gpt-4.1",
         "systemPrompt": "You are a children's storybook dialogue writer specialising in Indian 90s settings. You receive a story draft where character dialogue is marked with placeholders like [CROW_SAYS: ...], [CAT_SAYS: ...], [DOG_SAYS: ...]. Your job is to fill in every placeholder with short, warm, authentic dialogue.\n\nCharacter voices:\n- Kauwa (the crow): clever, a little dramatic, mixes Hindi words into his sentences. Likes to sound smart.\n- Billi (the cat): cool, dry, precise. Rarely says more than one sentence. Sounds like she has already won.\n- Kutta (the dog): warm, enthusiastic, honest. Uses simple words. Gets excited easily.\n\nEra rules: Set in Pune in the 90s. Characters may reference Doordarshan, Maruti 800, vada pav, chai, Chitrahaar, cable TV, cycle-rickshaws. No mobile phones. No internet references.\n\nReturn the COMPLETE story text with every placeholder replaced. Format each filled bubble as [CROW_SAYS: 'actual dialogue here']. Preserve every ## scene heading and every line of prose exactly as given. Only replace the placeholder content inside [...: ...].",
-        "userPrompt": "Fill in all the speech bubble placeholders in the story below. Return the complete story with every [CROW_SAYS: ...], [CAT_SAYS: ...], and [DOG_SAYS: ...] replaced by actual character dialogue.",
+        "userPrompt": "Fill in all the speech bubble placeholders in the story below. Return the complete story with every [CROW_SAYS: ...], [CAT_SAYS: ...], and [DOG_SAYS: ...] replaced by actual character dialogue.\n\n{{input}}",
         "temperature": 0.8,
-        "responseFormat": ""
+        "responseFormat": "",
+        "_portTypes": { "in_input": "any", "out_data": "string" }
       },
       "n_splitter": {
         "split_by": "scene",
