@@ -1,0 +1,139 @@
+{
+  "_comment": "Exported from CK8T — Agent Builder Studio — 2026-06-14T00:00:00.000Z",
+  "workflow": {
+    "id": "wf_storybook_pdf_per_scene",
+    "name": "Storybook · Crow, Cat & Dog → PDF with per-scene images",
+    "teamId": "t_fullstack",
+    "nodes": [
+      {
+        "id": "n_starter",
+        "data": { "title": "Start", "bgColor": "#2FB67C", "blockType": "starter" },
+        "type": "builderBlock",
+        "position": { "x": -800, "y": 250 }
+      },
+      {
+        "id": "n_story_input",
+        "data": { "title": "Story Text", "bgColor": "#FBBF24", "blockType": "user_input" },
+        "type": "builderBlock",
+        "position": { "x": -500, "y": 250 }
+      },
+      {
+        "id": "n_speech_agent",
+        "data": {
+          "title": "Speech Bubble Agent",
+          "width": 272, "height": 354,
+          "bgColor": "#6F3DFA", "disabled": false,
+          "blockType": "agent"
+        },
+        "type": "builderBlock",
+        "position": { "x": -150, "y": 250 }
+      },
+      {
+        "id": "n_splitter",
+        "data": {
+          "title": "Scene Splitter",
+          "bgColor": "#7c3aed", "disabled": false,
+          "blockType": "story_splitter"
+        },
+        "type": "builderBlock",
+        "position": { "x": 220, "y": 250 }
+      },
+      {
+        "id": "n_storybook_pdf",
+        "data": {
+          "title": "Storybook PDF",
+          "bgColor": "#dc2626", "disabled": false,
+          "blockType": "storybook_pdf"
+        },
+        "type": "builderBlock",
+        "position": { "x": 580, "y": 250 }
+      },
+      {
+        "id": "n_pdf_preview",
+        "data": {
+          "title": "PDF Preview",
+          "bgColor": "#14B8A6", "disabled": false,
+          "blockType": "show_preview"
+        },
+        "type": "builderBlock",
+        "position": { "x": 940, "y": 250 }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-starter-story_input",
+        "source": "n_starter", "target": "n_story_input",
+        "animated": true, "sourceHandle": "out", "targetHandle": "in"
+      },
+      {
+        "id": "e-story_input-speech_agent",
+        "source": "n_story_input", "target": "n_speech_agent",
+        "animated": true, "sourceHandle": "value", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-speech_agent-splitter",
+        "source": "n_speech_agent", "target": "n_splitter",
+        "animated": true, "sourceHandle": "data", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-splitter-storybook_pdf",
+        "source": "n_splitter", "target": "n_storybook_pdf",
+        "animated": true, "sourceHandle": "scenes", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-storybook_pdf-pdf_preview",
+        "source": "n_storybook_pdf", "target": "n_pdf_preview",
+        "animated": true, "sourceHandle": "pdf_base64", "targetHandle": "in_input"
+      }
+    ],
+    "subBlockValues": {
+      "n_starter": { "startWorkflow": "manual" },
+      "n_story_input": {
+        "kind": "longtext",
+        "label": "Story Text",
+        "required": true,
+        "placeholder": "Paste your story here. Use ## Scene Title headings. Mark character speech with [CROW_SAYS: ...], [CAT_SAYS: ...], [DOG_SAYS: ...] — the AI will fill them in.",
+        "defaultValue": "## Scene 1: The Empty Roof\n\nIt was the summer of 1994, the kind that made tar roads soft and dogs move slowly. On the crumbling terrace of Shivam Bhavan in Pune, Kauwa the crow sat very still, watching the street below. A cycle-rickshaw, three Ambassadors, and one brand-new Maruti 800 crawled past. He had spotted a half-eaten vada pav sitting on the second-floor windowsill, unguarded, perfect.\n\n[CROW_SAYS: ...]\n\n## Scene 2: The Clever Cat\n\nBilli was asleep on the warm ledge beneath the water tank, her striped tail curled around her like a coiled telephone cord. She had seen the vada pav appear at exactly 9 AM when the bai delivered it. She had been biding her time since then.\n\n[CAT_SAYS: ...]\n\n## Scene 3: The Dog Who Smelled Everything\n\nKutta had been sitting behind the neem tree at the gate of Shivam Bhavan since early morning. He was not as crafty as Billi, nor as quick as Kauwa. But in the entire mohalla, nobody had a nose like his.\n\n[DOG_SAYS: ...]\n\n## Scene 4: The Meeting Under the Peepal Tree\n\nAt noon, when the whole neighbourhood was asleep under the summer heat and the cable TV was showing nothing but test patterns and old Chitrahaar, all three slipped away and met under the big peepal tree near the Ganesh mandir.\n\n[CROW_SAYS: ...]\n[CAT_SAYS: ...]\n[DOG_SAYS: ...]\n\n## Scene 5: The Feast\n\nBy evening, all three were back on the terrace of Shivam Bhavan. Kauwa had the vada pav. Billi had found a whole bowl of malai. Kutta had somehow come into possession of two atta rotis. The last red sun of May melted slowly behind the water tower as they ate together without speaking, which is the nicest way to eat with friends.\n\n[CROW_SAYS: ...]\n[CAT_SAYS: ...]\n[DOG_SAYS: ...]",
+        "_portTypes": { "out_value": "string" }
+      },
+      "n_speech_agent": {
+        "model": "gpt-4.1",
+        "systemPrompt": "You are a children's storybook dialogue writer specialising in Indian 90s settings. You receive a story draft where character dialogue is marked with placeholders like [CROW_SAYS: ...], [CAT_SAYS: ...], [DOG_SAYS: ...]. Your job is to fill in every placeholder with short, warm, authentic dialogue.\n\nCharacter voices:\n- Kauwa (the crow): clever, a little dramatic, mixes Hindi words into his sentences. Likes to sound smart.\n- Billi (the cat): cool, dry, precise. Rarely says more than one sentence. Sounds like she has already won.\n- Kutta (the dog): warm, enthusiastic, honest. Uses simple words. Gets excited easily.\n\nEra rules: Set in Pune in the 90s. Characters may reference Doordarshan, Maruti 800, vada pav, chai, Chitrahaar, cable TV, cycle-rickshaws. No mobile phones. No internet references.\n\nReturn the COMPLETE story text with every placeholder replaced. Format each filled bubble as [CROW_SAYS: 'actual dialogue here']. Preserve every ## scene heading and every line of prose exactly as given. Only replace the placeholder content inside [...: ...].",
+        "userPrompt": "Fill in all the speech bubble placeholders in the story below. Return the complete story with every [CROW_SAYS: ...], [CAT_SAYS: ...], and [DOG_SAYS: ...] replaced by actual character dialogue.",
+        "temperature": 0.8,
+        "responseFormat": ""
+      },
+      "n_splitter": {
+        "split_by": "scene",
+        "include_heading": false,
+        "max_scenes": "8",
+        "_portTypes": {
+          "in_input": "any",
+          "out_scenes": "array",
+          "out_first": "json",
+          "out_last": "json",
+          "out_count": "number"
+        }
+      },
+      "n_storybook_pdf": {
+        "title": "Kauwa, Billi aur Kutta — An Indian 90s Tale",
+        "author": "salilvnair",
+        "page_size": "A4",
+        "layout": "title_scenes",
+        "font_size_heading": "18",
+        "font_size_body": "11",
+        "include_page_numbers": true,
+        "output_path": "",
+        "generate_scene_images": true,
+        "mcp_server": "ideogram4",
+        "image_model": "gpt-4.1",
+        "art_style": "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces, Pune neighbourhood, neem trees, old buildings, afternoon light",
+        "_portTypes": { "in_input": "any" }
+      },
+      "n_pdf_preview": {
+        "label": "Storybook PDF (base64)"
+      }
+    },
+    "createdAt": "2026-06-14T00:00:00.000Z"
+  }
+}

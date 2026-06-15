@@ -1,7 +1,7 @@
 export default {
   type: 'storybook_pdf',
   name: 'Storybook PDF',
-  description: 'Render scenes into a styled PDF storybook',
+  description: 'Render scenes into a styled PDF — generates one AI image per scene (kids-book layout)',
   category: 'custom',
   bgColor: '#dc2626',
   subBlocks: [
@@ -38,12 +38,44 @@ export default {
       type: 'short-input',
       placeholder: '~/Desktop/storybook.pdf  (blank = return base64)',
     },
+
+    /* ── Per-scene image generation ── */
+    {
+      id: 'generate_scene_images',
+      title: 'Generate scene images',
+      type: 'switch',
+      value: () => true,
+      description: 'Generate one AI image per scene and embed it above the text (kids-book layout).',
+    },
+    {
+      id: 'mcp_server',
+      title: 'Image MCP server',
+      type: 'short-input',
+      placeholder: 'ideogram4',
+      description: 'MCP server ID that provides magic_prompt and generate_image tools.',
+    },
+    {
+      id: 'image_model',
+      title: 'Art director model',
+      type: 'short-input',
+      placeholder: 'gpt-4.1',
+      description: 'LLM used to write the image prompt for each scene.',
+    },
+    {
+      id: 'art_style',
+      title: 'Art style',
+      type: 'long-input',
+      placeholder: "Indian 90s children's book illustration, warm colours, flat style, expressive animal faces",
+      description: 'Style description passed to the art director agent for every scene image.',
+    },
   ],
-  inputs:  { input: { type: 'any', description: 'scenes[] array or object with .scenes from Story Splitter' } },
+  inputs: {
+    input: { type: 'any', description: 'scenes[] array or object with .scenes from Story Splitter' },
+  },
   outputs: {
-    path:       { type: 'string', description: 'Absolute path of written PDF' },
+    path:       { type: 'string', description: 'Absolute path of written PDF (when output_path is set)' },
     pages:      { type: 'number', description: 'Total page count' },
     size_bytes: { type: 'number', description: 'File size in bytes' },
-    pdf_base64: { type: 'string', description: 'Base64 PDF (when no output_path)' },
+    pdf_base64: { type: 'string', description: 'Base64-encoded PDF (when no output_path)' },
   },
 }
