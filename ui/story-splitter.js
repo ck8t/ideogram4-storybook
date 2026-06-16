@@ -6,6 +6,7 @@ export default {
   group: 'Storybook',
   bgColor: '#7c3aed',
   iconSvg: 'M12 3L12 11|M12 11L7 20|M12 11L17 20',
+  hasProgress: true,
   subBlocks: [
     {
       id: 'split_by',
@@ -49,13 +50,15 @@ export default {
     last:   { type: 'json',   description: 'Last scene' },
   },
 
-  run({ values, input }) {
+  run({ values, input, progress }) {
     let text = ''
     if (typeof input === 'string') {
       text = input
     } else if (input && typeof input === 'object') {
       text = String(input.text ?? input.content ?? input.story ?? input.body ?? JSON.stringify(input))
     }
+
+    progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text…' })
 
     const splitBy        = String(values.split_by || 'scene')
     const delimiter      = String(values.delimiter || '\n\n---\n\n')
@@ -90,7 +93,13 @@ export default {
     }
 
     if (maxScenes > 0) scenes = scenes.slice(0, maxScenes)
+
+    progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes…` })
+
     const indexed = scenes.map((s, i) => ({ index: i + 1, ...s }))
+
+    progress?.({ pct: 100, step: 3, total: 3, label: `${indexed.length} scenes ready` })
+
     return { scenes: indexed, count: indexed.length, first: indexed[0] ?? null, last: indexed[indexed.length - 1] ?? null }
   },
 }

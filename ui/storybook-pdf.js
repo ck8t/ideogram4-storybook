@@ -6,6 +6,7 @@ export default {
   group: 'Storybook',
   bgColor: '#dc2626',
   iconSvg: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z|M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+  hasProgress: true,
   subBlocks: [
     { id: 'title',  title: 'Document title', type: 'short-input', placeholder: 'My Storybook' },
     { id: 'author', title: 'Author',          type: 'short-input', placeholder: 'Optional author name' },
@@ -90,13 +91,17 @@ export default {
       condition: { field: 'generate_scene_images', value: true },
     },
   ],
-  // Browser run: proxy the heavy lifting (pdf-lib, MCP calls) to the
-  // extension bridge server which runs the Node.js extension runner.
-  async run({ values, input, inputsByHandle }) {
+
+  async run({ values, input, inputsByHandle, progress }) {
+    progress?.({ pct: 5, step: 1, total: 3, label: 'Connecting to bridge…' })
+
     const base = (
       (typeof globalThis !== 'undefined' && globalThis.__CK8T_BRIDGE_BASE__) ||
       'http://127.0.0.1:3001/api/v1'
     ).replace(/\/$/, '')
+
+    progress?.({ pct: 20, step: 2, total: 3, label: 'Generating PDF…' })
+
     const res = await fetch(`${base}/ck8t/run-block`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,6 +111,9 @@ export default {
       const text = await res.text().catch(() => '')
       throw new Error(`Storybook PDF bridge error ${res.status}: ${text}`)
     }
+
+    progress?.({ pct: 90, step: 3, total: 3, label: 'Reading result…' })
+
     const { output } = await res.json()
     return output
   },

@@ -13,13 +13,15 @@
 
 /* ── story_splitter ── */
 
-function runStorySplitter({ values, input }) {
+function runStorySplitter({ values, input, progress }) {
   let text = ''
   if (typeof input === 'string') {
     text = input
   } else if (input && typeof input === 'object') {
     text = String(input.text ?? input.content ?? input.story ?? input.body ?? JSON.stringify(input, null, 2))
   }
+
+  progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text…' })
 
   const splitBy        = String(values.split_by || 'scene')
   const delimiter      = String(values.delimiter || '\n\n---\n\n')
@@ -65,13 +67,19 @@ function runStorySplitter({ values, input }) {
   }
 
   if (maxScenes > 0) scenes = scenes.slice(0, maxScenes)
+
+  progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes…` })
+
   const indexed = scenes.map((s, i) => ({ index: i + 1, ...s }))
+
+  progress?.({ pct: 100, step: 3, total: 3, label: `${indexed.length} scenes ready` })
+
   return { scenes: indexed, count: indexed.length, first: indexed[0] ?? null, last: indexed[indexed.length - 1] ?? null }
 }
 
 /* ── storybook_pdf ── */
 
-async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAgent }) {
+async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAgent, progress }) {
   const { PDFDocument, StandardFonts, rgb } = require('pdf-lib')
   const fs   = require('node:fs')
   const path = require('node:path')
@@ -118,6 +126,8 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   pdfDoc.setTitle(docTitle)
   if (docAuthor) pdfDoc.setAuthor(docAuthor)
   pdfDoc.setCreator('CK8T ideogram4-storybook')
+
+  progress?.({ pct: 5, step: 1, total: scenes.length + 2, label: 'Setting up PDF…' })
 
   const fontHead = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const fontBody = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -192,6 +202,9 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     const content = String(scene.content ?? scene.text ?? scene.body ?? '')
     const page    = pdfDoc.addPage([W, H])
     const maxW    = W - MARGIN * 2
+
+    const scenePct = Math.round(10 + ((i / scenes.length) * 80))
+    progress?.({ pct: scenePct, step: i + 2, total: scenes.length + 2, label: `Scene ${i + 1} / ${scenes.length}: ${title}` })
 
     // ── Resolve scene image ────────────────────────────────────────────────
     let sceneB64 = null
@@ -293,6 +306,8 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   }
 
   // ── Save ───────────────────────────────────────────────────────────────────
+  progress?.({ pct: 95, step: scenes.length + 2, total: scenes.length + 2, label: 'Saving PDF…' })
+
   const pdfBytes  = await pdfDoc.save()
   const pageCount = pdfDoc.getPageCount()
 
@@ -316,12 +331,14 @@ function _flattenMcpContent(raw) {
 module.exports = [
   {
     type: 'story_splitter',
-    run({ values, input }) { return runStorySplitter({ values, input }) },
+    hasProgress: true,
+    run({ values, input, progress }) { return runStorySplitter({ values, input, progress }) },
   },
   {
     type: 'storybook_pdf',
-    async run({ values, input, inputsByHandle, callTool, callAgent }) {
-      return runStorybookPdf({ values, input, inputsByHandle, callTool, callAgent })
+    hasProgress: true,
+    async run({ values, input, inputsByHandle, callTool, callAgent, progress }) {
+      return runStorybookPdf({ values, input, inputsByHandle, callTool, callAgent, progress })
     },
   },
 ]
