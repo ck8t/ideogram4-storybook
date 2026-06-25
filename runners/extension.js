@@ -157,16 +157,7 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     const coverPort = inputsByHandle && inputsByHandle['cover']
     let coverB64 = null
     if (coverPort) {
-      if (typeof coverPort === 'string') {
-        const m = coverPort.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
-        coverB64 = m ? m[1].replace(/\n/g, '') : (coverPort.length > 100 ? coverPort : null)
-      } else if (Array.isArray(coverPort)) {
-        const flat = coverPort.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
-        const m = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
-        if (m) coverB64 = m[1].replace(/\n/g, '')
-      } else if (coverPort && typeof coverPort === 'object') {
-        coverB64 = typeof coverPort.cover_base64 === 'string' ? coverPort.cover_base64 : null
-      }
+      try { coverB64 = await _resolveCoverBase64(coverPort) } catch (_e) { /* text-only fallback */ }
     }
     let textBaseY = H / 2 + 60
 
@@ -211,18 +202,10 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
 
     if (externalImages) {
       // Use pre-generated image from the "images" port (decoupled design).
+      // Supports: base64 strings, markdown images, Ideogram URL responses, and plain URLs.
       const raw = externalImages[i]
       if (raw != null) {
-        if (typeof raw === 'string') {
-          const m = raw.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
-          sceneB64 = m ? m[1].replace(/\n/g, '') : (raw.length > 100 ? raw : null)
-        } else if (Array.isArray(raw)) {
-          const flat = raw.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
-          const m = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
-          if (m) sceneB64 = m[1].replace(/\n/g, '')
-        } else if (raw && typeof raw === 'object' && typeof raw.base64 === 'string') {
-          sceneB64 = raw.base64
-        }
+        try { sceneB64 = await _resolveSceneImageBase64(raw) } catch (_e) { /* skip image for this scene */ }
       }
     } else if (genImages && mcpServer && typeof callAgent === 'function' && typeof callTool === 'function') {
       try {
@@ -324,6 +307,114 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
 function _flattenMcpContent(raw) {
   const items = Array.isArray(raw) ? raw : [raw]
   return items.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
+}
+
+/**
+ * Download an image URL and return its bytes as a base64 string.
+ * Works for http and https. Follows up to 5 redirects.
+ */
+function _downloadImageToBase64(url, redirectsLeft = 5) {
+  return new Promise((resolve, reject) => {
+    if (!url || typeof url !== 'string') return reject(new Error('Invalid URL'))
+    const mod = url.startsWith('https://') ? require('node:https') : require('node:http')
+    mod.get(url, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && redirectsLeft > 0) {
+        return resolve(_downloadImageToBase64(res.headers.location, redirectsLeft - 1))
+      }
+      if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode} downloading image`))
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('base64')))
+      res.on('error', reject)
+    }).on('error', reject)
+  })
+}
+
+/**
+ * Extract an image URL from an Ideogram 4.0 API response object.
+ * Ideogram returns: { data: [{ url, prompt, resolution, ... }], response_type: "url" }
+ */
+function _extractIdeogramUrl(obj) {
+  if (!obj || typeof obj !== 'object') return null
+  if (Array.isArray(obj.data) && obj.data.length > 0 && typeof obj.data[0].url === 'string') {
+    return obj.data[0].url
+  }
+  return null
+}
+
+/**
+ * Resolve a cover port value to a base64 PNG/JPEG string.
+ * Handles:
+ *   - raw base64 string
+ *   - markdown image: ![...](data:image/...;base64,<b64>)
+ *   - Ideogram response JSON: { data: [{ url }] }
+ *   - plain https?:// URL string
+ *   - { cover_base64: string }
+ *   - MCP content array
+ */
+async function _resolveCoverBase64(coverPort) {
+  if (!coverPort) return null
+
+  // Ideogram API response object
+  const ideogramUrl = _extractIdeogramUrl(coverPort)
+  if (ideogramUrl) return _downloadImageToBase64(ideogramUrl)
+
+  if (typeof coverPort === 'string') {
+    // Markdown image with base64 data URI
+    const mInline = coverPort.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+    if (mInline) return mInline[1].replace(/\n/g, '')
+    // Plain URL
+    if (/^https?:\/\//.test(coverPort)) return _downloadImageToBase64(coverPort)
+    // Raw base64 (long string with no spaces)
+    if (coverPort.length > 100 && !/\s/.test(coverPort.trim())) return coverPort.trim()
+    return null
+  }
+
+  if (Array.isArray(coverPort)) {
+    const flat = coverPort.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
+    const mInline = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+    if (mInline) return mInline[1].replace(/\n/g, '')
+    if (/^https?:\/\//.test(flat.trim())) return _downloadImageToBase64(flat.trim())
+    return null
+  }
+
+  if (coverPort && typeof coverPort === 'object') {
+    if (typeof coverPort.cover_base64 === 'string') return coverPort.cover_base64
+  }
+
+  return null
+}
+
+/**
+ * Resolve a single scene image value to base64.
+ * Same logic as _resolveCoverBase64 but for per-scene entries.
+ */
+async function _resolveSceneImageBase64(raw) {
+  if (!raw) return null
+
+  // Ideogram response object with data[0].url
+  const ideogramUrl = _extractIdeogramUrl(raw)
+  if (ideogramUrl) return _downloadImageToBase64(ideogramUrl)
+
+  if (typeof raw === 'string') {
+    const m = raw.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+    if (m) return m[1].replace(/\n/g, '')
+    if (/^https?:\/\//.test(raw)) return _downloadImageToBase64(raw)
+    if (raw.length > 100 && !/\s/.test(raw.trim())) return raw.trim()
+    return null
+  }
+
+  if (Array.isArray(raw)) {
+    const flat = raw.map(c => (c && typeof c === 'object') ? (c.text || '') : String(c || '')).join('')
+    const m = flat.match(/!\[.*?\]\(data:image\/(?:png|jpeg|jpg);base64,([A-Za-z0-9+/=\n]+)\)/)
+    if (m) return m[1].replace(/\n/g, '')
+    if (/^https?:\/\//.test(flat.trim())) return _downloadImageToBase64(flat.trim())
+    return null
+  }
+
+  if (raw && typeof raw === 'object' && typeof raw.base64 === 'string') return raw.base64
+
+  return null
 }
 
 /* ── Export ── */

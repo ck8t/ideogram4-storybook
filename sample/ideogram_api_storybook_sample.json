@@ -1,0 +1,134 @@
+{
+  "_comment": "Ideogram 4.0 API flow. Pipeline: user types prompt → API call to /v1/ideogram-v4/generate → image_url_preview shows the image → image_url_to_base64 downloads it → storybook_pdf embeds it as cover → show_preview renders the PDF. Auth: set authApiKeyValue in n_ideogram_api. Content-Type: multipart/form-data is handled by the api block's Body Type dropdown — no manual Content-Type header needed.",
+  "workflow": {
+    "id": "wf_ideogram_api_storybook_sample",
+    "name": "Ideogram 4.0 — Simple Prompt → Preview → PDF",
+    "teamId": "t_fullstack",
+    "nodes": [
+      {
+        "id": "n_starter",
+        "data": { "title": "Start", "bgColor": "#2FB67C", "blockType": "starter" },
+        "type": "builderBlock",
+        "position": { "x": -900, "y": 250 }
+      },
+      {
+        "id": "n_prompt_input",
+        "data": { "title": "Image Prompt", "bgColor": "#FBBF24", "blockType": "user_input" },
+        "type": "builderBlock",
+        "position": { "x": -600, "y": 250 }
+      },
+      {
+        "id": "n_ideogram_api",
+        "data": { "title": "Generate Image (Ideogram 4.0)", "bgColor": "#2F55FF", "blockType": "api" },
+        "type": "builderBlock",
+        "position": { "x": -230, "y": 250 }
+      },
+      {
+        "id": "n_image_preview",
+        "data": { "title": "Image Preview", "bgColor": "#8B5CF6", "blockType": "image_url_preview" },
+        "type": "builderBlock",
+        "position": { "x": 200, "y": 0 }
+      },
+      {
+        "id": "n_image_to_base64",
+        "data": { "title": "Image → Base64", "bgColor": "#6366F1", "blockType": "image_url_to_base64" },
+        "type": "builderBlock",
+        "position": { "x": 200, "y": 450 }
+      },
+      {
+        "id": "n_storybook_pdf",
+        "data": { "title": "Storybook PDF", "bgColor": "#dc2626", "blockType": "storybook_pdf" },
+        "type": "builderBlock",
+        "position": { "x": 580, "y": 450 }
+      },
+      {
+        "id": "n_pdf_preview",
+        "data": { "title": "PDF Preview", "bgColor": "#14B8A6", "blockType": "show_preview" },
+        "type": "builderBlock",
+        "position": { "x": 940, "y": 450 }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-starter-prompt",
+        "source": "n_starter", "target": "n_prompt_input",
+        "animated": true, "sourceHandle": "out", "targetHandle": "in"
+      },
+      {
+        "id": "e-prompt-api",
+        "source": "n_prompt_input", "target": "n_ideogram_api",
+        "animated": true, "sourceHandle": "value", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-api-image-preview",
+        "source": "n_ideogram_api", "target": "n_image_preview",
+        "animated": true, "sourceHandle": "data", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-api-to-base64",
+        "source": "n_ideogram_api", "target": "n_image_to_base64",
+        "animated": true, "sourceHandle": "data", "targetHandle": "in_input"
+      },
+      {
+        "id": "e-base64-to-pdf",
+        "source": "n_image_to_base64", "target": "n_storybook_pdf",
+        "animated": true, "sourceHandle": "base64", "targetHandle": "in_cover"
+      },
+      {
+        "id": "e-pdf-preview",
+        "source": "n_storybook_pdf", "target": "n_pdf_preview",
+        "animated": true, "sourceHandle": "pdf_base64", "targetHandle": "in_input"
+      }
+    ],
+    "subBlockValues": {
+      "n_starter": { "startWorkflow": "manual" },
+      "n_prompt_input": {
+        "kind": "text",
+        "label": "Image Prompt",
+        "required": true,
+        "placeholder": "Describe the image you want — e.g. 'A fox reading a book under a lantern in an autumn forest'",
+        "_portTypes": { "out_value": "string" }
+      },
+      "n_ideogram_api": {
+        "url": "https://api.ideogram.ai/v1/ideogram-v4/generate",
+        "method": "POST",
+        "params": [],
+        "headers": [],
+        "authorization": "api_key",
+        "authApiKeyName": "Api-Key",
+        "authApiKeyValue": "YOUR_IDEOGRAM_API_KEY",
+        "authApiKeyIn": "header",
+        "contentType": "multipart/form-data",
+        "bodyFormData": [
+          ["text_prompt", "{{input}}"],
+          ["rendering_speed", "DEFAULT"]
+        ],
+        "timeout": "60000",
+        "retries": "1",
+        "retryDelayMs": "2000",
+        "retryMaxDelayMs": "10000",
+        "_portTypes": { "in_input": "string", "out_data": "json" }
+      },
+      "n_image_preview": {
+        "_comment": "Extracts data[0].url from the Ideogram response and renders it as a live <img> in the inspector. No download needed — the image tag loads the URL directly."
+      },
+      "n_image_to_base64": {
+        "_comment": "Fetches the ephemeral Ideogram URL and converts it to base64. Output: { base64, mimeType, dataUri, url }. The base64 port feeds storybook_pdf.in_cover."
+      },
+      "n_storybook_pdf": {
+        "title": "My Ideogram Storybook",
+        "author": "",
+        "page_size": "A4",
+        "layout": "title_scenes",
+        "font_size_heading": "24",
+        "font_size_body": "12",
+        "include_page_numbers": false,
+        "output_path": "~/Downloads/ideogram-storybook.pdf",
+        "generate_scene_images": false,
+        "_portTypes": { "in_cover": "string", "out_pdf_base64": "string" }
+      },
+      "n_pdf_preview": { "label": "Storybook PDF" }
+    },
+    "createdAt": "2026-06-17T00:00:00.000Z"
+  }
+}

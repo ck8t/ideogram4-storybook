@@ -69,8 +69,28 @@ module.exports = [
   },
   {
     type: 'storybook_pdf',
-    run() {
-      throw new Error('Storybook PDF requires the CK8T VS Code extension (pdf-lib runs in Node.js). Connect the extension to generate the PDF.')
+    async run(ctx) {
+      // pdf-lib is Node-only — delegate to extension.js via the bridge.
+      // If the Debugger tab has breakpoints on extension.js, graph-runner.js
+      // sets ctx.__ck8tExtDebug which we forward here as __ck8tDebug so the
+      // bridge runs extension.js debug-instrumented for that session.
+      const bridgeBase = (globalThis.__CK8T_BRIDGE_BASE__ || 'http://127.0.0.1:3000').replace(/\/$/, '')
+      const body = {
+        type: 'storybook_pdf',
+        values: ctx.values ?? {},
+        input: ctx.input ?? null,
+        inputsByHandle: ctx.inputsByHandle ?? {},
+      }
+      if (ctx.__ck8tExtDebug) body.__ck8tDebug = ctx.__ck8tExtDebug
+
+      const res = await fetch(`${bridgeBase}/ck8t/run-block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      return data.output
     },
   },
 ]
