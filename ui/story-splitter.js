@@ -58,7 +58,7 @@ export default {
       text = String(input.text ?? input.content ?? input.story ?? input.body ?? JSON.stringify(input))
     }
 
-    progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text…' })
+    progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text...' })
 
     const splitBy        = String(values.split_by || 'scene')
     const delimiter      = String(values.delimiter || '\n\n---\n\n')
@@ -94,7 +94,7 @@ export default {
 
     if (maxScenes > 0) scenes = scenes.slice(0, maxScenes)
 
-    progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes…` })
+    progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes...` })
 
     const indexed = scenes.map((s, i) => ({ index: i + 1, ...s }))
 

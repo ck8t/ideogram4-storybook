@@ -21,7 +21,7 @@ function runStorySplitter({ values, input, progress }) {
     text = String(input.text ?? input.content ?? input.story ?? input.body ?? JSON.stringify(input, null, 2))
   }
 
-  progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text…' })
+  progress?.({ pct: 10, step: 1, total: 3, label: 'Parsing text...' })
 
   const splitBy        = String(values.split_by || 'scene')
   const delimiter      = String(values.delimiter || '\n\n---\n\n')
@@ -68,7 +68,7 @@ function runStorySplitter({ values, input, progress }) {
 
   if (maxScenes > 0) scenes = scenes.slice(0, maxScenes)
 
-  progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes…` })
+  progress?.({ pct: 70, step: 2, total: 3, label: `Indexing ${scenes.length} scenes...` })
 
   const indexed = scenes.map((s, i) => ({ index: i + 1, ...s }))
 
@@ -79,6 +79,22 @@ function runStorySplitter({ values, input, progress }) {
 
 /* ── storybook_pdf ── */
 
+/** Sanitize text for pdf-lib's WinAnsi (Latin-1) Helvetica fonts.
+ *  Converts common unicode typographic chars → ASCII equivalents,
+ *  then strips any remaining non-Latin-1 codepoints. */
+function pdfText(str) {
+  return String(str ?? '')
+    .replace(/[‘’ʼ′]/g, "'")   // curly single quotes / prime
+    .replace(/[“”″]/g, '"')          // curly double quotes
+    .replace(/…/g, '...')                       // horizontal ellipsis
+    .replace(/—/g, '--')                        // em dash
+    .replace(/–/g, '-')                         // en dash
+    .replace(/[   ]/g, ' ')           // non-breaking / narrow spaces
+    .replace(/[•‣◦]/g, '*')           // bullet variants
+    .replace(/[✓✔]/g, 'v')                 // checkmarks
+    .replace(/[^\x00-\xFF]/g, '?')                   // anything else outside Latin-1
+}
+
 async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAgent, progress }) {
   const { PDFDocument, StandardFonts, rgb } = require('pdf-lib')
   const fs   = require('node:fs')
@@ -86,12 +102,18 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   const os   = require('node:os')
 
   // ── Resolve scenes array ───────────────────────────────────────────────────
+  // When multiple ports are wired, graph-runner sets `input` = array of all
+  // upstream values. Use inputsByHandle.input (the in_input port) when
+  // available to get only the scenes, not the merged multi-input array.
+  const scenesRaw = (inputsByHandle && inputsByHandle.input != null)
+    ? inputsByHandle.input
+    : input
   let scenes = []
-  if (Array.isArray(input)) {
-    scenes = input
-  } else if (input && typeof input === 'object') {
-    scenes = Array.isArray(input.scenes) ? input.scenes
-           : Array.isArray(input.items)  ? input.items
+  if (Array.isArray(scenesRaw)) {
+    scenes = scenesRaw
+  } else if (scenesRaw && typeof scenesRaw === 'object') {
+    scenes = Array.isArray(scenesRaw.scenes) ? scenesRaw.scenes
+           : Array.isArray(scenesRaw.items)  ? scenesRaw.items
            : []
   }
 
@@ -127,7 +149,7 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   if (docAuthor) pdfDoc.setAuthor(docAuthor)
   pdfDoc.setCreator('CK8T ideogram4-storybook')
 
-  progress?.({ pct: 5, step: 1, total: scenes.length + 2, label: 'Setting up PDF…' })
+  progress?.({ pct: 5, step: 1, total: scenes.length + 2, label: 'Setting up PDF...' })
 
   const fontHead = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const fontBody = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -136,7 +158,7 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   const accent   = rgb(0.49, 0.23, 0.86)
 
   const drawWrapped = (page, txt, { x, y, maxW, font, size, color, lh }) => {
-    const words = String(txt).split(/\s+/)
+    const words = pdfText(txt).split(/\s+/)
     let line = ''; let cy = y
     for (const word of words) {
       const test = line ? `${line} ${word}` : word
@@ -178,8 +200,8 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     }
 
     tp.drawRectangle({ x: MARGIN, y: textBaseY - 10, width: W - MARGIN * 2, height: 3, color: accent })
-    tp.drawText(docTitle.toUpperCase(), { x: MARGIN, y: textBaseY + 20, font: fontHead, size: fsHead + 8, color: ink })
-    if (docAuthor) tp.drawText(`by ${docAuthor}`, { x: MARGIN, y: textBaseY - 30, font: fontBody, size: fsBody + 2, color: muted })
+    tp.drawText(pdfText(docTitle).toUpperCase(), { x: MARGIN, y: textBaseY + 20, font: fontHead, size: fsHead + 8, color: ink })
+    if (docAuthor) tp.drawText(pdfText(`by ${docAuthor}`), { x: MARGIN, y: textBaseY - 30, font: fontBody, size: fsBody + 2, color: muted })
     tp.drawText(`${scenes.length} scene${scenes.length !== 1 ? 's' : ''}`, { x: MARGIN, y: MARGIN, font: fontBody, size: fsBody - 1, color: muted })
   }
 
@@ -276,10 +298,15 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
     page.drawLine({ start: { x: MARGIN, y }, end: { x: MARGIN + 40, y }, thickness: 2, color: accent })
     y -= 20
 
-    // Body text
-    for (const para of content.split(/\n{2,}/)) {
+    // Body text — strip SAYS:/THINKS: metadata lines (used for image prompts only)
+    const narrativeLines = content.split('\n')
+      .filter(l => !/^\s*(SAYS|THINKS)\s*:/i.test(l))
+      .join('\n')
+    for (const para of narrativeLines.split(/\n{2,}/)) {
       if (y < MARGIN + 40) break
-      y = drawWrapped(page, para.trim(), { x: MARGIN, y, maxW, font: fontBody, size: fsBody, color: ink, lh: fsBody * 1.6 })
+      const paraText = para.trim()
+      if (!paraText) continue
+      y = drawWrapped(page, paraText, { x: MARGIN, y, maxW, font: fontBody, size: fsBody, color: ink, lh: fsBody * 1.6 })
       y -= fsBody * 0.8
     }
 
@@ -289,7 +316,7 @@ async function runStorybookPdf({ values, input, inputsByHandle, callTool, callAg
   }
 
   // ── Save ───────────────────────────────────────────────────────────────────
-  progress?.({ pct: 95, step: scenes.length + 2, total: scenes.length + 2, label: 'Saving PDF…' })
+  progress?.({ pct: 95, step: scenes.length + 2, total: scenes.length + 2, label: 'Saving PDF...' })
 
   const pdfBytes  = await pdfDoc.save()
   const pageCount = pdfDoc.getPageCount()
@@ -380,6 +407,10 @@ async function _resolveCoverBase64(coverPort) {
 
   if (coverPort && typeof coverPort === 'object') {
     if (typeof coverPort.cover_base64 === 'string') return coverPort.cover_base64
+    // Lightweight sentinel from cuda_id4_generate — read from temp file on disk
+    if (typeof coverPort.__ck8t_file_path === 'string') {
+      return fs.readFileSync(coverPort.__ck8t_file_path).toString('base64')
+    }
   }
 
   return null
@@ -412,7 +443,13 @@ async function _resolveSceneImageBase64(raw) {
     return null
   }
 
-  if (raw && typeof raw === 'object' && typeof raw.base64 === 'string') return raw.base64
+  if (raw && typeof raw === 'object') {
+    if (typeof raw.base64 === 'string') return raw.base64
+    // Lightweight sentinel from cuda_id4_generate — read from temp file on disk
+    if (typeof raw.__ck8t_file_path === 'string') {
+      return fs.readFileSync(raw.__ck8t_file_path).toString('base64')
+    }
+  }
 
   return null
 }

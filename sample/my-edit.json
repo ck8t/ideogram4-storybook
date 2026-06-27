@@ -1,0 +1,434 @@
+{
+  "_comment": "Exported from CK8T — Agent Builder Studio — 2026-06-27T05:00:38.730Z",
+  "workflow": {
+    "id": "wf_397ca1ed-ed7f-40b3-9098-ad7ecbcbfbd7",
+    "name": "Storybook - Illustrated via RunPod CUDA Ideogram 4_Save",
+    "teamId": "t_fullstack",
+    "nodes": [
+      {
+        "id": "n_3799a66a-0a80-4eba-ae6b-7c61addad901",
+        "data": {
+          "title": "Start",
+          "bgColor": "#2FB67C",
+          "blockType": "starter"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": -1300,
+          "y": 250
+        }
+      },
+      {
+        "id": "n_b549dd83-9fa2-4317-bd8a-0a167f3de32c",
+        "data": {
+          "title": "High Level Story",
+          "bgColor": "#FBBF24",
+          "blockType": "user_input"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": -1000,
+          "y": 250
+        }
+      },
+      {
+        "id": "n_6860965d-1dbc-4c59-abe0-e67440c91de3",
+        "data": {
+          "title": "Story Writer",
+          "width": 272,
+          "height": 354,
+          "bgColor": "#6F3DFA",
+          "disabled": false,
+          "blockType": "agent"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": -650,
+          "y": 250
+        }
+      },
+      {
+        "id": "n_937c9015-1ecf-4ae1-b178-4fd1295c527b",
+        "data": {
+          "title": "Scene Splitter",
+          "bgColor": "#7c3aed",
+          "disabled": false,
+          "blockType": "story_splitter"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": -280,
+          "y": 250
+        }
+      },
+      {
+        "id": "n_e4cdebbe-4b2d-4a37-a0ef-4d395d621096",
+        "data": {
+          "title": "Generate Scene Images (RunPod)",
+          "bgColor": "#0ea5e9",
+          "disabled": false,
+          "blockType": "function"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 80,
+          "y": -80
+        }
+      },
+      {
+        "id": "n_68e89a77-23db-43f1-933b-ac68db7579c3",
+        "data": {
+          "title": "Load RunPod Model",
+          "bgColor": "#7c3aed",
+          "disabled": false,
+          "blockType": "cuda_id4_loader"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": -654,
+          "y": 760
+        }
+      },
+      {
+        "id": "n_8186ad2a-cfd1-418f-8050-4712b6879d3f",
+        "data": {
+          "title": "Cover Prompt Agent",
+          "width": 272,
+          "height": 354,
+          "bgColor": "#6F3DFA",
+          "disabled": false,
+          "blockType": "agent"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 80,
+          "y": 560
+        }
+      },
+      {
+        "id": "n_02ad88a3-3656-4f43-948f-5ca61bc8098a",
+        "data": {
+          "title": "Generate Cover Image",
+          "bgColor": "#059669",
+          "disabled": false,
+          "blockType": "cuda_id4_generate"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 420,
+          "y": 560
+        }
+      },
+      {
+        "id": "n_50ffcde4-297c-49f6-816c-73bb5ec23b22",
+        "data": {
+          "title": "Save Cover Image",
+          "bgColor": "#0ea5e9",
+          "disabled": false,
+          "blockType": "save_to_files"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 1100,
+          "y": 760
+        }
+      },
+      {
+        "id": "n_dadeb1c3-44ce-4927-a29e-ca7fcd47f077",
+        "data": {
+          "title": "Cover Preview",
+          "bgColor": "#14B8A6",
+          "disabled": false,
+          "blockType": "show_preview"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 1090,
+          "y": 258
+        }
+      },
+      {
+        "id": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "data": {
+          "title": "Storybook PDF",
+          "bgColor": "#dc2626",
+          "disabled": false,
+          "blockType": "storybook_pdf"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 1500,
+          "y": 250
+        }
+      },
+      {
+        "id": "n_f51de11d-eb11-477a-bcaa-8fb6817592a5",
+        "data": {
+          "title": "PDF Preview",
+          "bgColor": "#14B8A6",
+          "disabled": false,
+          "blockType": "show_preview"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 1956,
+          "y": 220
+        }
+      },
+      {
+        "id": "n_c83d05fa-8fe0-490f-8986-8a58e723bdfc",
+        "data": {
+          "title": "Save Storybook PDF",
+          "bgColor": "#0ea5e9",
+          "disabled": false,
+          "blockType": "save_to_files"
+        },
+        "type": "builderBlock",
+        "position": {
+          "x": 1966,
+          "y": 1124
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e_43998ed1-d6d5-4935-86e6-11e6585991c3",
+        "source": "n_3799a66a-0a80-4eba-ae6b-7c61addad901",
+        "target": "n_b549dd83-9fa2-4317-bd8a-0a167f3de32c",
+        "animated": true,
+        "sourceHandle": "out",
+        "targetHandle": "in"
+      },
+      {
+        "id": "e_e95243d2-0811-4a9f-b543-3623abce4e34",
+        "source": "n_b549dd83-9fa2-4317-bd8a-0a167f3de32c",
+        "target": "n_6860965d-1dbc-4c59-abe0-e67440c91de3",
+        "animated": true,
+        "sourceHandle": "value",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_fad09de4-6b53-4741-873f-99732db49df2",
+        "source": "n_b549dd83-9fa2-4317-bd8a-0a167f3de32c",
+        "target": "n_68e89a77-23db-43f1-933b-ac68db7579c3",
+        "animated": true,
+        "sourceHandle": "value",
+        "targetHandle": "in_trigger"
+      },
+      {
+        "id": "e_473e5105-e5ae-47d4-a189-5afdee71fcb8",
+        "source": "n_6860965d-1dbc-4c59-abe0-e67440c91de3",
+        "target": "n_937c9015-1ecf-4ae1-b178-4fd1295c527b",
+        "animated": true,
+        "sourceHandle": "data",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_beb6da87-a6ac-44bc-86b9-425e35842ef3",
+        "source": "n_937c9015-1ecf-4ae1-b178-4fd1295c527b",
+        "target": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "animated": true,
+        "sourceHandle": "scenes",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_8eefaf21-5304-4fcb-bc42-6231f99fd823",
+        "source": "n_937c9015-1ecf-4ae1-b178-4fd1295c527b",
+        "target": "n_e4cdebbe-4b2d-4a37-a0ef-4d395d621096",
+        "animated": true,
+        "sourceHandle": "scenes",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_87b5e061-a7d3-4a38-9fb2-12281676c58d",
+        "source": "n_e4cdebbe-4b2d-4a37-a0ef-4d395d621096",
+        "target": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "animated": true,
+        "sourceHandle": "result",
+        "targetHandle": "in_images"
+      },
+      {
+        "id": "e_f66ebb18-57d1-43b5-aa71-11427399c990",
+        "source": "n_937c9015-1ecf-4ae1-b178-4fd1295c527b",
+        "target": "n_8186ad2a-cfd1-418f-8050-4712b6879d3f",
+        "animated": true,
+        "sourceHandle": "first",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_160f9405-a9dd-44e1-a592-786262be50ad",
+        "source": "n_8186ad2a-cfd1-418f-8050-4712b6879d3f",
+        "target": "n_02ad88a3-3656-4f43-948f-5ca61bc8098a",
+        "animated": true,
+        "sourceHandle": "data",
+        "targetHandle": "in_prompt"
+      },
+      {
+        "id": "e_977b6329-b9c0-4f70-bcd6-6502658d780e",
+        "source": "n_68e89a77-23db-43f1-933b-ac68db7579c3",
+        "target": "n_02ad88a3-3656-4f43-948f-5ca61bc8098a",
+        "animated": true,
+        "sourceHandle": "server_url",
+        "targetHandle": "in_server_url"
+      },
+      {
+        "id": "e_0e76a2af-afcd-47b4-93fb-5bf608e01e99",
+        "source": "n_dadeb1c3-44ce-4927-a29e-ca7fcd47f077",
+        "target": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "animated": true,
+        "sourceHandle": "payload",
+        "targetHandle": "in_cover"
+      },
+      {
+        "id": "e_f46062d3-a1b0-4ef2-a5da-5754019de2f5",
+        "source": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "target": "n_f51de11d-eb11-477a-bcaa-8fb6817592a5",
+        "animated": true,
+        "sourceHandle": "pdf_base64",
+        "targetHandle": "in_input"
+      },
+      {
+        "id": "e_1d390a93-66f3-418a-80a6-e490748cdbe7",
+        "source": "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827",
+        "target": "n_c83d05fa-8fe0-490f-8986-8a58e723bdfc",
+        "animated": true,
+        "sourceHandle": "pdf_base64",
+        "targetHandle": "in_input"
+      },
+      {
+        "source": "n_02ad88a3-3656-4f43-948f-5ca61bc8098a",
+        "sourceHandle": "image_b64",
+        "target": "n_dadeb1c3-44ce-4927-a29e-ca7fcd47f077",
+        "targetHandle": "in_input",
+        "animated": true,
+        "id": "reactflow__edge-n_02ad88a3-3656-4f43-948f-5ca61bc8098aimage_b64-n_dadeb1c3-44ce-4927-a29e-ca7fcd47f077in_input"
+      },
+      {
+        "source": "n_02ad88a3-3656-4f43-948f-5ca61bc8098a",
+        "sourceHandle": "image_b64",
+        "target": "n_50ffcde4-297c-49f6-816c-73bb5ec23b22",
+        "targetHandle": "in_input",
+        "animated": true,
+        "id": "reactflow__edge-n_02ad88a3-3656-4f43-948f-5ca61bc8098aimage_b64-n_50ffcde4-297c-49f6-816c-73bb5ec23b22in_input"
+      }
+    ],
+    "subBlockValues": {
+      "n_3799a66a-0a80-4eba-ae6b-7c61addad901": {
+        "startWorkflow": "manual"
+      },
+      "n_b549dd83-9fa2-4317-bd8a-0a167f3de32c": {
+        "kind": "longtext",
+        "label": "High Level Story Idea",
+        "required": true,
+        "placeholder": "A clever tortoise and a lost fox cub find their way home through a flooded forest...",
+        "_portTypes": {
+          "in_in": "any",
+          "out_value": "string"
+        },
+        "defaultValue": "A clever tortoise and a lost fox cub find their way home through a flooded forest..."
+      },
+      "n_6860965d-1dbc-4c59-abe0-e67440c91de3": {
+        "model": "deepseek-v4-flash",
+        "provider": "deepseek",
+        "systemPrompt": "You are a skilled children's storybook author. Turn the user's high-level idea into a warm, vivid short story. Break the story into clearly separated scenes, each introduced by a '## Scene Title' heading. Keep each scene self-contained (3-6 sentences) so it can become its own illustrated page.",
+        "userPrompt": "Write a short illustrated story based on this idea:\n\n{{input}}",
+        "temperature": 0.8,
+        "_portTypes": {
+          "in_input": "any",
+          "out_data": "string"
+        }
+      },
+      "n_937c9015-1ecf-4ae1-b178-4fd1295c527b": {
+        "split_by": "scene",
+        "include_heading": false,
+        "max_scenes": "8",
+        "_portTypes": {
+          "in_input": "any",
+          "out_scenes": "array",
+          "out_first": "json",
+          "out_last": "json",
+          "out_count": "number"
+        }
+      },
+      "n_e4cdebbe-4b2d-4a37-a0ef-4d395d621096": {
+        "language": "javascript",
+        "code": "return (async () => {\n  // Paste your RunPod proxy URL here (same one as the Load Model block below).\n  var RUNPOD_URL = 'RUNPOD_URL';\n  var serverUrl = String(RUNPOD_URL || '').replace(/\\/$/, '');\n\n  var scenes = Array.isArray(input) ? input : (input && Array.isArray(input.scenes) ? input.scenes : []);\n  var images = [];\n\n  for (var i = 0; i < scenes.length; i++) {\n    var scene = scenes[i] || {};\n    var prompt = String(scene.content || scene.title || '').slice(0, 900);\n    if (!prompt || !serverUrl || serverUrl === 'RUNPOD_URL') { images.push(null); continue; }\n    try {\n      var resp = await fetch(serverUrl + '/generate', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({\n          prompt: prompt,\n          preset: 'DEFAULT',\n          aspect_ratio: '4:3',\n          magic: true,\n          return_base64: true,\n        }),\n      });\n      if (!resp.ok) {\n        console.warn('Scene ' + (i + 1) + ' generate failed: HTTP ' + resp.status);\n        images.push(null);\n        continue;\n      }\n      var data = await resp.json();\n      images.push(data.image_b64 || null);\n    } catch (e) {\n      console.warn('Scene ' + (i + 1) + ' generate error: ' + (e && e.message));\n      images.push(null);\n    }\n  }\n\n  return images;\n})();",
+        "_portTypes": {
+          "in_input": "array",
+          "out_result": "array"
+        }
+      },
+      "n_68e89a77-23db-43f1-933b-ac68db7579c3": {
+        "server_url": "https://3yn8oq5wfitt9k-8080.proxy.runpod.net",
+        "skip_if_loaded": true,
+        "_portTypes": {
+          "in_trigger": "any",
+          "out_status": "string",
+          "out_load_time_s": "number",
+          "out_vram_gb": "number",
+          "out_server_url": "string"
+        }
+      },
+      "n_8186ad2a-cfd1-418f-8050-4712b6879d3f": {
+        "model": "deepseek-v4-flash",
+        "provider": "deepseek",
+        "systemPrompt": "You are a visual art director for a children's storybook. Given the opening scene, write a vivid, cinematic cover image prompt. Focus on mood, setting, era, and key visual elements - composition, lighting, atmosphere. Return a plain prompt under 80 words, no JSON, no preamble.",
+        "userPrompt": "Create a cover image prompt for this opening scene:\n\nTitle: {{title}}\n\nContent:\n{{content}}",
+        "temperature": 0.7,
+        "_portTypes": {
+          "in_input": "any",
+          "out_data": "string"
+        }
+      },
+      "n_02ad88a3-3656-4f43-948f-5ca61bc8098a": {
+        "server_url": "",
+        "preset": "DEFAULT",
+        "aspect_ratio": "1:1",
+        "magic": true,
+        "seed": "",
+        "_portTypes": {
+          "in_prompt": "string",
+          "in_server_url": "string",
+          "out_image_b64": "string",
+          "out_output_path": "string",
+          "out_filename": "string",
+          "out_seed": "number",
+          "out_elapsed_s": "number",
+          "out_prompt_used": "string"
+        }
+      },
+      "n_50ffcde4-297c-49f6-816c-73bb5ec23b22": {
+        "filename": "storybook_cover_{{timestamp}}.png",
+        "format": "binary"
+      },
+      "n_dadeb1c3-44ce-4927-a29e-ca7fcd47f077": {
+        "label": "Cover Image"
+      },
+      "n_973cbcc7-f485-4fa5-9ad5-c88633b9f827": {
+        "title": "My Storybook",
+        "author": "",
+        "page_size": "A4",
+        "layout": "title_scenes",
+        "font_size_heading": "18",
+        "font_size_body": "11",
+        "include_page_numbers": true,
+        "output_path": "",
+        "generate_scene_images": false,
+        "_portTypes": {
+          "in_input": "any",
+          "in_images": "array",
+          "in_cover": "any",
+          "out_pdf_base64": "string"
+        }
+      },
+      "n_f51de11d-eb11-477a-bcaa-8fb6817592a5": {
+        "label": "Storybook PDF (base64)"
+      },
+      "n_c83d05fa-8fe0-490f-8986-8a58e723bdfc": {
+        "filename": "storybook_{{timestamp}}.pdf",
+        "format": "pdf"
+      }
+    },
+    "createdAt": "2026-06-27T03:22:15.998Z"
+  }
+}

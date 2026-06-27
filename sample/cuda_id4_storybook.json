@@ -1,0 +1,168 @@
+{
+  "_comment": "Storybook fully illustrated via your own RunPod cuda-id4 server (no Ideogram API, no MCP, no function-block workarounds anywhere). Flow: Start -> High Level Story (user_input) -> Story Writer (agent, writes a full story with '## Scene' headings) -> Scene Splitter (story_splitter) -> scenes[] feeds two parallel jobs: (1) TEXT: scenes -> storybook_pdf.in_input, one chapter per scene; (2) IMAGES: scenes -> a REAL ForEach Loop node (for_each) wired in a closed cycle with the literal cuda_id4_loader -> cuda_id4_generate pair - for_each.item -> Extract Scene Text (function, pulls scene.content as a plain string) -> Generate Scene Image (cuda_id4_generate, server_url wired in from Load RunPod Model - an external, non-cycle input) -> straight back into for_each.in_feedback, closing the loop. for_each runs this 2-node body chain once per scene (graph-runner.js's loop-engine.js drives it directly - see src/ck8t/run/loop-engine.js) and collects one real, distinct base64 image per scene into for_each.iterations -> storybook_pdf.in_images. continueOnError is ON for this loop so one failed scene doesn't abort the whole story. The cuda_id4_loader -> cuda_id4_generate node pair is ALSO used standalone (not in the loop) for a single LLM-art-directed COVER image (mirrors the cover sub-pipeline in mcp_image_storybook.json/any_image_api_storybook.json, just swapping MCP/API for your RunPod server) - its result is saved to disk AND previewed, then wired directly into storybook_pdf.in_cover - cuda_id4_generate.image_b64 (raw base64, no data: prefix - fixed at the source in cuda-id4 v1.0.4, see below) wires straight to all three consumers (save, in_cover, preview) with zero intermediate nodes. BEFORE RUNNING: replace the RUNPOD_URL placeholder in the Load Model block's 'RunPod server URL' field with your real RunPod proxy URL (both Generate nodes get it from there, no other place to edit). Per-scene images are embedded straight into the PDF and aren't individually saved/previewed (only the cover is); verify them via the final PDF Preview node. TWO REAL BUGS FIXED, BOTH AT THE SOURCE, NOT WORKED AROUND: (1) cuda_id4_generate's UI run() used to prefix image_b64 with 'data:image/png;base64,' while its own runners/extension.js never did - fixed in /Users/salilvnair/workspace/git/ck8t/cuda-id4/ui/cuda-id4-generate.js so image_b64 is always raw, unprefixed base64 now, matching runners/extension.js. (2) show_preview's canvas card used to only auto-render a string as an image/PDF if it was ALREADY a data:mime;base64,... URI (see extractMediaUri in src/ck8t/blocks/block-utils.js) - now it also sniffs the decoded magic bytes of any raw, unprefixed base64 string (PNG/JPEG/GIF/PDF signatures) and renders it directly, so cuda_id4_generate.image_b64 and storybook_pdf.pdf_base64 wire straight into Cover Preview / PDF Preview with no wrapper function needed at all. The final storybook_pdf.pdf_base64 output fans out directly to PDF Preview (renders as an embedded PDF) and Save Storybook PDF (save_to_files, format='pdf') which triggers a real save - inside the VS Code extension this opens a native Save dialog (fixed a real bug where graph-runner.js's buildRunCtx read a vsApi global that was never actually set, so it silently fell back to the plain-browser <a download> path instead).",
+  "workflow": {
+    "id": "wf_cuda_id4_storybook",
+    "name": "Storybook - Illustrated via RunPod CUDA Ideogram 4",
+    "teamId": "t_fullstack",
+    "nodes": [
+      { "id": "n_starter",        "data": { "title": "Start",                            "bgColor": "#2FB67C", "blockType": "starter" },        "type": "builderBlock", "position": { "x": -1300, "y": 250 } },
+      { "id": "n_story_input",    "data": { "title": "High Level Story",                 "bgColor": "#FBBF24", "blockType": "user_input" },     "type": "builderBlock", "position": { "x": -1000, "y": 250 } },
+      { "id": "n_story_agent",    "data": { "title": "Story Writer", "width": 272, "height": 354, "bgColor": "#6F3DFA", "disabled": false, "blockType": "agent" }, "type": "builderBlock", "position": { "x": -650, "y": 250 } },
+      { "id": "n_splitter",       "data": { "title": "Scene Splitter",                   "bgColor": "#7c3aed", "disabled": false, "blockType": "story_splitter" }, "type": "builderBlock", "position": { "x": -280, "y": 250 } },
+
+      { "id": "n_for_each",       "data": { "title": "ForEach Scene",                    "bgColor": "#6366F1", "disabled": false, "blockType": "for_each" }, "type": "builderBlock", "position": { "x": 80, "y": -120 } },
+      { "id": "n_extract_scene",  "data": { "title": "Extract Scene Text",               "bgColor": "#0ea5e9", "disabled": false, "blockType": "function" }, "type": "builderBlock", "position": { "x": 400, "y": -120 } },
+      { "id": "n_gen_scene_img",  "data": { "title": "Generate Scene Image",             "bgColor": "#059669", "disabled": false, "blockType": "cuda_id4_generate" }, "type": "builderBlock", "position": { "x": 720, "y": -120 } },
+
+      { "id": "n_loader",         "data": { "title": "Load RunPod Model",                "bgColor": "#7c3aed", "disabled": false, "blockType": "cuda_id4_loader" },   "type": "builderBlock", "position": { "x": -650, "y": 560 } },
+      { "id": "n_cover_agent",    "data": { "title": "Cover Prompt Agent", "width": 272, "height": 354, "bgColor": "#6F3DFA", "disabled": false, "blockType": "agent" }, "type": "builderBlock", "position": { "x": 80, "y": 560 } },
+      { "id": "n_gen_cover",      "data": { "title": "Generate Cover Image",             "bgColor": "#059669", "disabled": false, "blockType": "cuda_id4_generate" },  "type": "builderBlock", "position": { "x": 420, "y": 560 } },
+      { "id": "n_cover_save",     "data": { "title": "Save Cover Image",                 "bgColor": "#0ea5e9", "disabled": false, "blockType": "save_to_files" }, "type": "builderBlock", "position": { "x": 760, "y": 760 } },
+      { "id": "n_cover_preview",  "data": { "title": "Cover Preview",                    "bgColor": "#14B8A6", "disabled": false, "blockType": "show_preview" },  "type": "builderBlock", "position": { "x": 760, "y": 460 } },
+
+      { "id": "n_storybook_pdf",  "data": { "title": "Storybook PDF",                    "bgColor": "#dc2626", "disabled": false, "blockType": "storybook_pdf" }, "type": "builderBlock", "position": { "x": 1500, "y": 250 } },
+      { "id": "n_pdf_preview",    "data": { "title": "PDF Preview",                      "bgColor": "#14B8A6", "disabled": false, "blockType": "show_preview" },  "type": "builderBlock", "position": { "x": 1860, "y": 60 } },
+      { "id": "n_pdf_save",       "data": { "title": "Save Storybook PDF",               "bgColor": "#0ea5e9", "disabled": false, "blockType": "save_to_files" }, "type": "builderBlock", "position": { "x": 1860, "y": 360 } }
+    ],
+    "edges": [
+      { "id": "e-starter-story_input",     "source": "n_starter",       "target": "n_story_input",   "animated": true, "sourceHandle": "out",        "targetHandle": "in" },
+      { "id": "e-story_input-story_agent", "source": "n_story_input",   "target": "n_story_agent",   "animated": true, "sourceHandle": "value",      "targetHandle": "in_input" },
+      { "id": "e-story_input-loader",      "source": "n_story_input",   "target": "n_loader",        "animated": true, "sourceHandle": "value",      "targetHandle": "in_trigger" },
+      { "id": "e-story_agent-splitter",    "source": "n_story_agent",   "target": "n_splitter",      "animated": true, "sourceHandle": "data",       "targetHandle": "in_input" },
+
+      { "id": "e-splitter-pdf-text",       "source": "n_splitter",      "target": "n_storybook_pdf", "animated": true, "sourceHandle": "scenes",     "targetHandle": "in_input" },
+
+      { "id": "e-splitter-for_each",       "source": "n_splitter",      "target": "n_for_each",      "animated": true, "sourceHandle": "scenes",     "targetHandle": "in_input" },
+      { "id": "e-for_each-extract",        "source": "n_for_each",      "target": "n_extract_scene", "animated": true, "sourceHandle": "item",       "targetHandle": "in_input" },
+      { "id": "e-extract-gen_scene_img",   "source": "n_extract_scene", "target": "n_gen_scene_img", "animated": true, "sourceHandle": "result",     "targetHandle": "in_prompt" },
+      { "id": "e-loader-gen_scene_img",    "source": "n_loader",        "target": "n_gen_scene_img", "animated": true, "sourceHandle": "server_url", "targetHandle": "in_server_url" },
+      { "id": "e-gen_scene_img-for_each-fb", "source": "n_gen_scene_img", "target": "n_for_each",    "animated": true, "sourceHandle": "image_b64",  "targetHandle": "in_feedback" },
+      { "id": "e-for_each-pdf-images",     "source": "n_for_each",      "target": "n_storybook_pdf", "animated": true, "sourceHandle": "iterations", "targetHandle": "in_images" },
+
+      { "id": "e-splitter-cover_agent",    "source": "n_splitter",      "target": "n_cover_agent",   "animated": true, "sourceHandle": "first",      "targetHandle": "in_input" },
+      { "id": "e-cover_agent-gen_cover",   "source": "n_cover_agent",   "target": "n_gen_cover",     "animated": true, "sourceHandle": "data",       "targetHandle": "in_prompt" },
+      { "id": "e-loader-gen_cover",        "source": "n_loader",        "target": "n_gen_cover",     "animated": true, "sourceHandle": "server_url", "targetHandle": "in_server_url" },
+      { "id": "e-gen_cover-cover_save",    "source": "n_gen_cover",     "target": "n_cover_save",    "animated": true, "sourceHandle": "image_b64",  "targetHandle": "in_input" },
+      { "id": "e-gen_cover-pdf-cover",     "source": "n_gen_cover",     "target": "n_storybook_pdf", "animated": true, "sourceHandle": "image_b64",  "targetHandle": "in_cover" },
+      { "id": "e-gen_cover-preview",       "source": "n_gen_cover",     "target": "n_cover_preview", "animated": true, "sourceHandle": "image_b64",  "targetHandle": "in_input" },
+
+      { "id": "e-pdf-preview",             "source": "n_storybook_pdf", "target": "n_pdf_preview",   "animated": true, "sourceHandle": "pdf_base64", "targetHandle": "in_input" },
+      { "id": "e-pdf-save",                "source": "n_storybook_pdf", "target": "n_pdf_save",      "animated": true, "sourceHandle": "pdf_base64", "targetHandle": "in_input" }
+    ],
+    "subBlockValues": {
+      "n_starter": { "startWorkflow": "manual" },
+
+      "n_story_input": {
+        "kind": "long-text", "label": "High Level Story Idea", "required": true,
+        "placeholder": "A classic Aesop fable — The Fox and the Grapes...",
+        "defaultValue": "Classic Aesop fable — The Fox and the Grapes. A hungry fox spots a beautiful bunch of ripe purple grapes hanging high on a vine. He leaps and jumps again and again trying to reach them but always falls short. After many funny failed attempts he gives up and walks away muttering that the grapes must be sour anyway. Retell this as a warm funny cartoon picture book for 5-year-olds in EXACTLY 5 scenes. Each scene is one illustrated page. Keep words very simple and short — max 2 sentences per scene. The fox should speak in speech bubbles (show his exact words) and think in thought bubbles (show his funny inner thoughts). Cartoon drawing style like classic children's picture books — bright colours, thick outlines, big expressive eyes.",
+        "_portTypes": { "in_in": "any", "out_value": "string" }
+      },
+
+      "n_story_agent": {
+        "model": "", "provider": "",
+        "systemPrompt": "You are a children's picture-book author writing for 5-year-olds. Turn the user's idea into a story in EXACTLY 5 scenes. Each scene must start with a '## Scene N: Title' heading (e.g. '## Scene 1: Fox Sees the Grapes').\n\nFor each scene write EXACTLY this format — nothing else:\n\n## Scene N: Title\n[Page text: 1-2 sentences, max 8 simple words each. What happens on this page.]\nSAYS: \"[What the main character says out loud — short, fun, in quotes]\"\nTHINKS: *[What the character thinks privately — funny inner thought, in asterisks]*\n\nRules:\n- Words a 5-year-old knows only\n- Big emotions, clear simple actions\n- Fox is funny and a little silly\n- Scene 5 = the moral, gentle and warm\n- NEVER write more than 2 page-text sentences\n- ALWAYS include SAYS and THINKS on every scene",
+        "userPrompt": "Write a 5-scene cartoon picture book based on this idea:\n\n{{input}}",
+        "temperature": 0.85,
+        "_portTypes": { "in_input": "any", "out_data": "string" }
+      },
+
+      "n_splitter": {
+        "split_by": "scene", "include_heading": false, "max_scenes": "5",
+        "_portTypes": { "in_input": "any", "out_scenes": "array", "out_first": "json", "out_last": "json", "out_count": "number" }
+      },
+
+      "n_for_each": {
+        "itemVar": "scene",
+        "maxConcurrency": 1,
+        "continueOnError": true,
+        "_portTypes": { "in_input": "array", "in_feedback": "any", "out_item": "any", "out_iterations": "array", "out_last": "json" }
+      },
+
+      "n_extract_scene": {
+        "language": "javascript",
+        "code": "const scene = input && typeof input === 'object' ? input : null;\nif (!scene) return String(input || '');\nconst title = scene.title || '';\nconst raw = scene.content || '';\nconst saysM = raw.match(/^SAYS:\\s*\"?(.+?)\"?\\s*$/m);\nconst thinksM = raw.match(/^THINKS:\\s*\\*?(.+?)\\*?\\s*$/m);\nconst narrative = raw.replace(/^(SAYS|THINKS):.+$/gm, '').trim();\nconst says = saysM ? saysM[1].trim() : '';\nconst thinks = thinksM ? thinksM[1].trim() : '';\nlet prompt = title ? title + ': ' + narrative : narrative;\nif (says) prompt += '. Speech bubble says: \"' + says + '\"';\nif (thinks) prompt += '. Thought bubble thinks: \"' + thinks + '\"';\nprompt += '. Style: bright flat cartoon illustration for a 5-year-old children picture book, cute anthropomorphic fox character, thick black outlines, bold pastel colours, big expressive eyes, simple clean background, speech bubble and thought bubble clearly visible, Aesop fable storybook art.';\nreturn prompt;",
+        "_portTypes": { "in_input": "any", "out_result": "string" }
+      },
+
+      "n_gen_scene_img": {
+        "server_url": "",
+        "preset": "QUALITY",
+        "aspect_ratio": "3:4",
+        "magic": true,
+        "seed": "",
+        "_portTypes": {
+          "in_prompt": "string",
+          "in_server_url": "string",
+          "out_image_b64": "string",
+          "out_output_path": "string",
+          "out_filename": "string",
+          "out_seed": "number",
+          "out_elapsed_s": "number",
+          "out_prompt_used": "string"
+        }
+      },
+
+      "n_loader": {
+        "server_url": "RUNPOD_URL",
+        "skip_if_loaded": true,
+        "_portTypes": {
+          "in_trigger": "any",
+          "out_status": "string",
+          "out_load_time_s": "number",
+          "out_vram_gb": "number",
+          "out_server_url": "string"
+        }
+      },
+
+      "n_cover_agent": {
+        "systemPrompt": "You are a children's book cover illustrator. Write a single image generation prompt (under 90 words, no preamble, no JSON) for a bright cartoon picture-book cover. The cover must show the main character in a fun pose with a big title-worthy composition. Style: flat bright cartoon illustration, thick black outlines, bold pastel colours, big expressive eyes, cute anthropomorphic animals, children's picture book cover art, Aesop fable storybook style. Include any speech or thought bubble that would look great on a cover.",
+        "userPrompt": "Create a cartoon cover image prompt for this children's picture book.\n\nOpening scene title: {{title}}\n\nScene content:\n{{content}}\n\nMake it feel like a classic picture-book cover — joyful, colourful, inviting for a 5-year-old.",
+        "temperature": 0.7,
+        "_portTypes": { "in_input": "any", "out_data": "string" }
+      },
+
+      "n_gen_cover": {
+        "server_url": "",
+        "preset": "DEFAULT",
+        "aspect_ratio": "1:1",
+        "magic": true,
+        "seed": "",
+        "_portTypes": {
+          "in_prompt": "string",
+          "in_server_url": "string",
+          "out_image_b64": "string",
+          "out_output_path": "string",
+          "out_filename": "string",
+          "out_seed": "number",
+          "out_elapsed_s": "number",
+          "out_prompt_used": "string"
+        }
+      },
+
+      "n_cover_save": {
+        "path": "~/.salilvnair/ck8t/output",
+        "filename": "storybook_cover_{{timestamp}}.png",
+        "format": "binary"
+      },
+
+      "n_cover_preview": { "label": "Cover Image" },
+
+      "n_storybook_pdf": {
+        "title": "The Fox and the Grapes", "author": "An Aesop Fable", "page_size": "A4", "layout": "title_scenes",
+        "font_size_heading": "18", "font_size_body": "11", "include_page_numbers": true,
+        "output_path": "", "generate_scene_images": false,
+        "_portTypes": { "in_input": "any", "in_images": "array", "in_cover": "any", "out_pdf_base64": "string" }
+      },
+
+      "n_pdf_preview": { "label": "Storybook PDF" },
+
+      "n_pdf_save": {
+        "path": "~/.salilvnair/ck8t/output",
+        "filename": "storybook_{{timestamp}}.pdf",
+        "format": "pdf"
+      }
+    },
+    "createdAt": "2026-06-26T00:00:00.000Z"
+  }
+}

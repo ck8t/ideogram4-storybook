@@ -1,17 +1,25 @@
 {
   "id": "ideogram4-storybook",
   "name": "Ideogram 4 Storybook",
-  "version": "1.0.8",
+  "version": "1.0.12",
   "author": "salilvnair",
   "description": "Story Splitter + Storybook PDF — split a story into scenes and export a styled PDF storybook",
   "blocks": [
-    { "type": "story_splitter", "ui": "ui/story-splitter.js" },
-    { "type": "storybook_pdf",  "ui": "ui/storybook-pdf.js"  }
+    {
+      "type": "story_splitter",
+      "ui": "ui/story-splitter.js"
+    },
+    {
+      "type": "storybook_pdf",
+      "ui": "ui/storybook-pdf.js"
+    }
   ],
   "runners": {
-    "server":    "runners/server.js",
+    "server": "runners/server.js",
     "extension": "runners/extension.js",
-    "client":    "runners/client.js"
+    "client": "runners/client.js"
   },
-  "npm": ["pdf-lib"]
+  "npm": [
+    "pdf-lib"
+  ]
 }

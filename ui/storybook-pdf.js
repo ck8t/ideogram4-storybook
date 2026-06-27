@@ -92,27 +92,21 @@ export default {
     },
   ],
 
-  async run({ values, input, inputsByHandle, progress }) {
-    progress?.({ pct: 5, step: 1, total: 3, label: 'Connecting to bridge…' })
-
+  async run({ values, input, inputsByHandle, nodeId }) {
     const base = (
       (typeof globalThis !== 'undefined' && globalThis.__CK8T_BRIDGE_BASE__) ||
       'http://127.0.0.1:3001/api/v1'
     ).replace(/\/$/, '')
 
-    progress?.({ pct: 20, step: 2, total: 3, label: 'Generating PDF…' })
-
     const res = await fetch(`${base}/ck8t/run-block`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'storybook_pdf', values, input, inputsByHandle }),
+      body: JSON.stringify({ type: 'storybook_pdf', nodeId, values, input, inputsByHandle }),
     })
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new Error(`Storybook PDF bridge error ${res.status}: ${text}`)
     }
-
-    progress?.({ pct: 90, step: 3, total: 3, label: 'Reading result…' })
 
     const { output } = await res.json()
     return output
